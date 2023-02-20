@@ -141,5 +141,8 @@ files:
         TextGeneratorTests().run_tests()
   learner_created: false
 feedback_link: https://hyperskill.org/projects/134/stages/714/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: "Mon, 20 Feb 2023 20:05:47 UTC"
 record: -1
