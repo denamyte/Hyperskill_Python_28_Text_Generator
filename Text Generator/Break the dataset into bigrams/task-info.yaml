@@ -129,6 +129,12 @@ files:
     if __name__ == '__main__':
         TextGeneratorTests().run_tests()
   learner_created: false
+- name: text_generator/data.py
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/134/stages/715/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: "Mon, 20 Feb 2023 21:13:53 UTC"
 record: -1

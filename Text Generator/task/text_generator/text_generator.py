@@ -1,17 +1,19 @@
 import re
 from typing import List
+from data import Bigram
 
 RE_ERROR = re.compile(r'(?<=\')\w+(?=Error)')
 
 
 def main():
     corpus = read_file(input())
-    print_stats(corpus)
+    bigrams = convert_to_bigrams(corpus)
+    print(f'Number of bigrams: {len(bigrams)}\n')
     while (cmd := input()) != 'exit':
         try:
-            print(corpus[int(cmd)])
+            print(bigrams[int(cmd)])
         except Exception as e:
-            print(f'{RE_ERROR.search(str(type(e))).group()} Error')
+            print(f'{RE_ERROR.search(str(type(e))).group()} Error ' * 2)
 
 
 def read_file(name: str) -> List[str]:
@@ -20,12 +22,10 @@ def read_file(name: str) -> List[str]:
     return re.split(r'\s', text.strip())
 
 
-def print_stats(corpus: List[str]):
-    print(f'''\
-Corpus statistics
-All tokens: {len(corpus)}
-Unique tokens: {len(set(corpus))}
-''')
+def convert_to_bigrams(corpus: List[str]) -> List[Bigram]:
+    second_iter = iter(corpus)
+    next(second_iter)
+    return [Bigram(*z) for z in zip(corpus, second_iter)]
 
 
 if __name__ == '__main__':
