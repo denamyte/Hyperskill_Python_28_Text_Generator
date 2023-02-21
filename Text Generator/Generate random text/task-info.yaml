@@ -72,6 +72,29 @@ files:
     if __name__ == '__main__':
         TextGeneratorTests().run_tests()
   learner_created: false
+- name: text_generator/data.py
+  visible: true
+  text: |
+    from collections import Counter
+    from typing import List
+
+
+    class BigramCounter:
+        def __init__(self, head, tails: List[str]):
+            self._head = head
+            self._counter = Counter(tails)
+
+        def __str__(self):
+            return f'Head: {self._head}\n' +\
+                    '\n'.join(f'Tail: {w:10s} Count: {c}' for w, c
+                              in self._counter.most_common()) + '\n'
+  learner_created: true
+- name: text_generator/model.py
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/134/stages/717/implement#comment
-status: Unchecked
-record: -1
+status: Solved
+feedback:
+  message: Congratulations!
+  time: "Tue, 21 Feb 2023 11:38:10 UTC"
+record: 4

@@ -1,93 +1,67 @@
 from hstest.stage_test import StageTest
 from hstest.test_case import TestCase
 from hstest.check_result import CheckResult
-from hstest import WrongAnswer
-from collections import Counter, defaultdict
-from random import sample
-import re
 
 PATH = "test/corpus.txt"
 
-def preprocess() -> dict:
-    # tokenize
+def preprocess():
     with open(PATH, "r", encoding="utf-8") as f:
-        corpus = f.read().split()
-
-    # create n-grams
-    ngrams = list()
-    for i in range(len(corpus) - 1):
-        ngrams.append((corpus[i], corpus[i + 1]))
-
-    # get frequencies
-    freq = defaultdict(Counter)
-    for head, tail in ngrams:
-        freq[head][tail] += 1
-    return freq
+        return f.read().split()
 
 
 class TextGeneratorTests(StageTest):
-
     def generate(self):
-        with open(PATH, "r", encoding="utf-8") as f:
-            corpus = f.read().split()
-        try:
-            test_input1 = PATH + "\nKing\nJon\nNight\nKlangenfurt\nexit\n"
-            test_input2 = PATH + "\n" + '\n'.join(sample(corpus, 3)) + "\nexit\n"
-            test_input3 = PATH + "\n" + '\n'.join(sample(corpus, 3)) + "\nNotInCorpus\nexit\n"
-        except ValueError:
-            raise WrongAnswer(f"The corpus file in '{PATH}' seems to be empty. "
-                              "Make sure you didn't delete its content by accident.")
         return [
-            TestCase(stdin=test_input1, attach=test_input1, time_limit=30000),
-            TestCase(stdin=test_input2, attach=test_input2, time_limit=30000),
-            TestCase(stdin=test_input3, attach=test_input3, time_limit=30000)
+            TestCase(stdin=PATH, time_limit=30000),
+            TestCase(stdin=PATH, time_limit=30000),
+            TestCase(stdin=PATH, time_limit=30000)
         ]
 
     def check(self, reply, attach):
+        punct = {".", "?", "!"}
+
         try:
-            model = preprocess()
+            corpus = preprocess()
         except FileNotFoundError:
             return CheckResult.wrong("File not found at {}. Make sure the file "
                                      "has not been deleted or moved.".format(PATH))
 
-        # check output
-        if not reply:
-            return CheckResult.wrong("The output cannot be empty! Make sure to output the results of your program!")
+        sentences = [sentence for sentence in reply.split('\n') if len(sentence)]
 
-        entries = reply.split('Head: ')
-        if len(entries) == 1:
-            return CheckResult.wrong("Make sure that every entry starts with the line: 'Head: [head]'")
+        if len(sentences) != 10:
+            return CheckResult.wrong("You should output exactly 10 sentences! "
+                                     "Every sentence should be in a new line.")
 
-        for entry in entries:
-            lines = entry.split('\n')
-
-            # check if the "head" is in the model: if not, it will stay None
-            control = None
-            if lines[0] in model:
-                control = model[lines[0]]
-            results = lines[1:-2]
-            for res in results:
-                if control is not None:
-                    if len(res.split()) != 4:
-                        return CheckResult.wrong(
-                            "Every tail entry should have the format: 'Tail: [tail] Count: [count]'")
-                    tail, count = res.split()[1], res.split()[3]
-                    if tail not in control:
-                        return CheckResult.wrong("Invalid tail: every tail should be part of the entry that corresponds to the given head!!")
-                    try:
-                        if int(count) != control[tail]:
-                            return CheckResult.wrong(
-                                "Incorrect count in model. Make sure that repetitions are recorded as count.")
-                    except ValueError:
-                        return CheckResult.wrong("Count should be castable to int.")
-                else:
-                    line = re.sub(r'\s', '', res.lower())
-                    if "keyerror" not in line:
-                        return CheckResult.wrong(
-                            "Error messages should contain the types of errors (Index Error, Type Error, Key Error etc.)")
-
+        for sentence in sentences:
+            sent = sentence.split()
+            if len(sent) < 5:
+                return CheckResult.wrong(
+                    "A pseudo-sentence should not be shorter than 5 tokens.")
+            if len(set(sent)) == 1:
+                return CheckResult.wrong(
+                    "Invalid output. All words of a sentence are identical.")
+            if not sent[0][0].isupper():
+                return CheckResult.wrong(
+                    "Every pseudo-sentence should start with a capitalized word.")
+            if sent[0][-1] in punct:
+                return CheckResult.wrong(
+                    "The first token of a pseudo-sentence should not "
+                    "end with sentence-ending punctuation.")
+            if sent[-1][-1] not in punct:
+                return CheckResult.wrong(
+                    "Every pseudo-sentence should end with a "
+                    "sentence-ending punctuation mark.")
+            for i, token in enumerate(sent):
+                if token not in corpus:
+                    return CheckResult.wrong(
+                        "Sentences should contain only words from the corpus!")
+                if token[-1] in punct and 4 < i+1 < len(sent):
+                    return CheckResult.wrong(
+                        "If a sentence is longer than 5 tokens, it "
+                        "should end at the first sentence ending punctuation.")
         return CheckResult.correct()
 
 
 if __name__ == '__main__':
     TextGeneratorTests().run_tests()
+
